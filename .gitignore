@@ -1,0 +1,68 @@
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub-cache/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+
+# IntelliJ related
+*.iml
+.idea/
+
+# VS Code related
+.vscode/
+
+# iOS/Xcode related
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/.symlinks/
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/build/
+
+# Android/Gradle related
+android/.gradle/
+android/build/
+android/local.properties
+
+# Misc
+*.log
+*.lock
+*.tmp
+*.swp
+*.DS_Store
+*.class
+
+# Generated files
+pubspec.lock
+pubspec - Copy.lock
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# IDE/editor folders
+.idea/
+.vscode/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Optional npm cache directory
+.npm/
+
+# Build output (if you have any build scripts)
+dist/
+build/
