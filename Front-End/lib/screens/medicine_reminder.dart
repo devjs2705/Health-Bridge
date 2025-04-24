@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/authService.dart';
+import '../services/medicineReminderService.dart';
 import '../widgets/keyboard_aware_scroll_view.dart';
 
 class MedicineReminder extends StatefulWidget {
@@ -14,6 +16,9 @@ class _MedicineReminderState extends State<MedicineReminder> {
   String _selectedTime = 'Morning';
   bool _isBeforeMeal = true;
   final Set<String> _selectedDays = {};
+  final int patientId = int.parse(AuthService.id);
+
+  List<Map<String, dynamic>> reminders = [];
 
   final List<String> _days = [
     'Monday',
@@ -25,20 +30,11 @@ class _MedicineReminderState extends State<MedicineReminder> {
     'Sunday',
   ];
 
-  final List<Map<String, dynamic>> _reminders = [
-    {
-      'medicine': 'Paracetamol',
-      'time': 'Morning',
-      'isBeforeMeal': true,
-      'days': {'Monday', 'Wednesday', 'Friday'},
-    },
-    {
-      'medicine': 'Vitamin C',
-      'time': 'Afternoon',
-      'isBeforeMeal': false,
-      'days': {'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'},
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadReminders();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,9 +81,9 @@ class _MedicineReminderState extends State<MedicineReminder> {
                     ),
                     items: ['Morning', 'Afternoon', 'Night']
                         .map((time) => DropdownMenuItem(
-                              value: time,
-                              child: Text(time),
-                            ))
+                      value: time,
+                      child: Text(time),
+                    ))
                         .toList(),
                     onChanged: (value) {
                       setState(() {
@@ -152,37 +148,48 @@ class _MedicineReminderState extends State<MedicineReminder> {
               ),
             ),
             const SizedBox(height: 16),
-            ListView.builder(
+            reminders.isEmpty
+                ? const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  'No reminders yet. Add one!',
+                  style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                ),
+              ),
+            )
+                : ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _reminders.length,
+              itemCount: reminders.length,
               itemBuilder: (context, index) {
-                final reminder = _reminders[index];
+                final reminder = reminders[index];
+                final medicine = reminder['medicine_name'] ?? 'Unknown';
+                final shift = reminder['shift']?.toString().isNotEmpty == true
+                    ? reminder['shift']
+                    : 'Time not set';
+                final beforeMeal = (reminder['before_meal'] == 1)
+                    ? 'Before Meal'
+                    : 'After Meal';
+                final days = (reminder['days'] is List)
+                    ? (reminder['days'] as List).join(', ')
+                    : 'No days selected';
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     leading: const Icon(Icons.medication),
-                    title: Text(reminder['medicine']),
+                    title: Text(medicine),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '${reminder['time']} - ${reminder['isBeforeMeal'] ? 'Before Meal' : 'After Meal'}',
-                        ),
+                        Text('$shift - $beforeMeal'),
                         const SizedBox(height: 4),
                         Text(
-                          'Days: ${reminder['days'].join(', ')}',
+                          'Days: $days',
                           style: const TextStyle(fontSize: 12),
                         ),
                       ],
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () {
-                        setState(() {
-                          _reminders.removeAt(index);
-                        });
-                      },
                     ),
                   ),
                 );
@@ -194,23 +201,55 @@ class _MedicineReminderState extends State<MedicineReminder> {
     );
   }
 
-  void _addReminder() {
+  Future<void> _addReminder() async {
     if (_formKey.currentState!.validate() && _selectedDays.isNotEmpty) {
-      setState(() {
-        _reminders.add({
-          'medicine': _medicineController.text,
-          'time': _selectedTime,
-          'isBeforeMeal': _isBeforeMeal,
-          'days': Set<String>.from(_selectedDays),
-        });
+      try {
+        var response = await MedicineReminderService.addReminder(
+          patientId: int.parse(AuthService.id),
+          medicineName: _medicineController.text,
+          shift: _selectedTime,
+          beforeMeal: _isBeforeMeal,
+          days: _selectedDays.toList(),
+        );
+
+        print(response);
+
         _medicineController.clear();
         _selectedDays.clear();
-      });
+
+        await _loadReminders();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reminder added successfully')),
+        );
+      } catch (e) {
+        print("Error adding reminder: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to add reminder')),
+        );
+      }
     } else if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one day'),
-        ),
+        const SnackBar(content: Text('Please select at least one day')),
+      );
+    }
+  }
+
+  Future<void> _loadReminders() async {
+    try {
+      final medicineReminders = await MedicineReminderService.getReminders(
+        int.parse(AuthService.id),
+      );
+
+      setState(() {
+        reminders
+          ..clear()
+          ..addAll(medicineReminders);
+      });
+    } catch (e) {
+      print("Error loading reminders: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load reminders')),
       );
     }
   }
@@ -220,4 +259,4 @@ class _MedicineReminderState extends State<MedicineReminder> {
     _medicineController.dispose();
     super.dispose();
   }
-} 
+}
