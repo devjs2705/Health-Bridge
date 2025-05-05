@@ -10,6 +10,7 @@ const patientMyAppointments = require("./routes/patientMyAppointments.js");
 const doctorMyAppointments = require("./routes/doctorMyAppointments.js");
 const connectDb = require("./utils/DB.js")
 const cors = require("cors")
+const chatbot = require("./routes/chatbot.js");
 
 const corsOptions = {
     origin: "http://localhost:5173",
@@ -30,6 +31,8 @@ app.use("/api/patient", patientMyAppointmentsDoctors);
 app.use("/api/patient", doctorTimeSlots);
 app.use("/api/patient", bookAppointment);
 app.use("/api/patient", patientMyAppointments);
+
+app.use("/api/chatbot", chatbot);
 
 
 const PORT = 5000;

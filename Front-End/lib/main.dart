@@ -49,7 +49,7 @@ class RuralMedApp extends StatelessWidget {
           '/appointment': (context) => const AppointmentBooking(),
           '/teleconsultation': (context) => const Teleconsultation(),
           '/medicine-reminder': (context) => const MedicineReminder(),
-          '/ai-symptom-checker': (context) => const AISymptomChecker(),
+          '/ai-symptom-checker': (context) => ChatbotPage(),
           '/appointments-list': (context) {
             String role = AuthService.role;
             String id = AuthService.id;

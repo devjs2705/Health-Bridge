@@ -1,128 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import '../services/chatbotService.dart';
 
-class AISymptomChecker extends StatefulWidget {
-  const AISymptomChecker({super.key});
-
+class ChatbotPage extends StatefulWidget {
   @override
-  State<AISymptomChecker> createState() => _AISymptomCheckerState();
+  _ChatbotPageState createState() => _ChatbotPageState();
 }
 
-class _AISymptomCheckerState extends State<AISymptomChecker> {
-  final _symptomController = TextEditingController();
-  String? _aiResponse;
-  bool _isLoading = false;
+class _ChatbotPageState extends State<ChatbotPage> {
+  String? _chatbotUrl;  // Variable to store the chatbot URL
+  bool _isLoading = true;  // Flag to indicate loading state
+  late WebViewController _webViewController;  // Controller to manage WebView
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the WebView platform for Android
+    WebView.platform = SurfaceAndroidWebView(); // Required for Android
+
+    // Fetch the chatbot URL when the page loads
+    _getChatbotUrl();
+  }
+
+  // Fetch chatbot URL from the service
+  _getChatbotUrl() async {
+    try {
+      String url = await ChatbotService().getChatbotUrl();  // Get URL from service
+      setState(() {
+        _chatbotUrl = url;  // Store the fetched URL
+        _isLoading = false;  // Set loading state to false
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;  // Set loading state to false on error
+      });
+      // Handle error (show error message or fallback)
+      print("Error fetching chatbot URL: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Symptom Checker'),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Describe your symptoms',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Example: "I have a fever and headache for the last 2 days"',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _symptomController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your symptoms here...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _checkSymptoms,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text('Check Symptoms'),
-                ),
-              ),
-              if (_aiResponse != null) ...[
-                const SizedBox(height: 32),
-                const Text(
-                  'AI Analysis',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(_aiResponse!),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO: Navigate to doctor recommendation
-                          },
-                          icon: const Icon(Icons.medical_services),
-                          label: const Text('Find Recommended Doctors'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+        title: Text("AI Doctor Chatbot"),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);  // Go back to the home page
+          },
         ),
+      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())  // Show loading spinner while fetching URL
+          : _chatbotUrl == null
+          ? Center(child: Text("Failed to load chatbot"))  // Show error message if URL is null
+          : WebView(
+        initialUrl: _chatbotUrl,  // Use the fetched URL in the WebView
+        javascriptMode: JavascriptMode.unrestricted,  // Enable JavaScript
+        onWebViewCreated: (WebViewController webViewController) {
+          _webViewController = webViewController;  // Initialize the controller
+        },
+        onPageStarted: (String url) {
+          setState(() {
+            _isLoading = true;  // Set loading state to true when page starts loading
+          });
+        },
+        onPageFinished: (String url) {
+          setState(() {
+            _isLoading = false;  // Set loading state to false when page finishes loading
+          });
+        },
+        navigationDelegate: (NavigationRequest request) {
+          if (request.url.startsWith("https://")) {
+            // Allow navigation if the URL starts with "https://"
+            return NavigationDecision.navigate;
+          }
+          return NavigationDecision.prevent;  // Prevent other URLs
+        },
       ),
     );
   }
-
-  void _checkSymptoms() {
-    setState(() {
-      _isLoading = true;
-    });
-
-    // Simulate API call
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _aiResponse = 'Based on your symptoms, you may be experiencing a common cold or flu. '
-            'It is recommended to:\n\n'
-            '1. Rest and stay hydrated\n'
-            '2. Take over-the-counter medications for fever and pain\n'
-            '3. Monitor your temperature\n\n'
-            'If symptoms persist for more than 3 days, please consult a doctor.';
-        _isLoading = false;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _symptomController.dispose();
-    super.dispose();
-  }
-} 
+}
