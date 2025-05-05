@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/myAppointmentService.dart';
+import './video_call_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class AppointmentsList extends StatefulWidget {
   final String role; // 'doctor' or 'patient'
@@ -111,8 +113,80 @@ class _AppointmentsListState extends State<AppointmentsList> {
             ),
             const SizedBox(height: 8),
             Text(subtitle),
-            Text('Date: $date'),
-            Text('Time: $time'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Date: $date'),
+                    Text('Time: $time'),
+                  ]
+                ),
+                if (widget.role == 'doctor')
+                  SizedBox(
+                    height: 36,
+                    width: 36,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VideoCallScreen(
+                              channelName: "appointment123",
+                              uid: 1,
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      child: const FaIcon(
+                        FontAwesomeIcons.video,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                if (widget.role == 'patient') // Check if the role is 'patient'
+                  SizedBox(
+                    height: 36,
+                    width: 36,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VideoCallScreen(
+                              channelName: "appointment123", // Same channel as doctor's button
+                              uid: 2, // Use patient's UID
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      child: const FaIcon(
+                        FontAwesomeIcons.video,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

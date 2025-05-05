@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/availability_provider.dart';
 import '../models/availability.dart';
 import '../services/setAvailabilityService.dart';
+import './video_call_screen.dart';
 
 class DoctorDashboard extends StatefulWidget {
   final int doctorId;
