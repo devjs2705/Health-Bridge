@@ -49,6 +49,8 @@ class AuthService {
       String email, String password, String role) async {
     final url = Uri.parse('$baseUrl/api/auth/login');
 
+    print("I am inside the Login Funciton");
+
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
