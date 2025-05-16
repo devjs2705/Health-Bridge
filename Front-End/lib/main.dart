@@ -14,8 +14,10 @@ import 'screens/signup_screen.dart';
 import 'theme/app_theme.dart';
 import 'providers/appointments_provider.dart';
 import 'providers/availability_provider.dart';
+import 'services/notificationService.dart';
 
 Future<void> main() async {
+  // await NotificationService.init();
   runApp(const RuralMedApp());
 }
 
@@ -34,7 +36,7 @@ class RuralMedApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'RuralMed',
         theme: AppTheme.theme,
-        initialRoute: '/login',
+        initialRoute: '/home',
         routes: {
           '/login': (context) => const LoginScreen(),
           '/signup': (context) => const SignupScreen(),

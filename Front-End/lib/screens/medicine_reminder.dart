@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/authService.dart';
 import '../services/medicineReminderService.dart';
+import '../services/notificationService.dart';
 import '../widgets/keyboard_aware_scroll_view.dart';
 
 class MedicineReminder extends StatefulWidget {
@@ -16,7 +17,7 @@ class _MedicineReminderState extends State<MedicineReminder> {
   String _selectedTime = 'Morning';
   bool _isBeforeMeal = true;
   final Set<String> _selectedDays = {};
-  final int patientId = int.parse(AuthService.id);
+  late final int patientId;
 
   List<Map<String, dynamic>> reminders = [];
 
@@ -33,6 +34,7 @@ class _MedicineReminderState extends State<MedicineReminder> {
   @override
   void initState() {
     super.initState();
+    patientId = int.parse(AuthService.id);
     _loadReminders();
   }
 
@@ -154,7 +156,8 @@ class _MedicineReminderState extends State<MedicineReminder> {
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Text(
                   'No reminders yet. Add one!',
-                  style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                  style:
+                  TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
                 ),
               ),
             )
@@ -168,7 +171,8 @@ class _MedicineReminderState extends State<MedicineReminder> {
                 final shift = reminder['shift']?.toString().isNotEmpty == true
                     ? reminder['shift']
                     : 'Time not set';
-                final beforeMeal = (reminder['before_meal'] == 1)
+                final beforeMeal =
+                (reminder['before_meal'] == true || reminder['before_meal'] == 1)
                     ? 'Before Meal'
                     : 'After Meal';
                 final days = (reminder['days'] is List)
@@ -203,27 +207,46 @@ class _MedicineReminderState extends State<MedicineReminder> {
 
   Future<void> _addReminder() async {
     if (_formKey.currentState!.validate() && _selectedDays.isNotEmpty) {
-      try {
-        var response = await MedicineReminderService.addReminder(
-          patientId: int.parse(AuthService.id),
-          medicineName: _medicineController.text,
-          shift: _selectedTime,
-          beforeMeal: _isBeforeMeal,
-          days: _selectedDays.toList(),
-        );
+      final success = await MedicineReminderService.addReminder(
+        patientId: patientId,
+        medicineName: _medicineController.text.trim(),
+        shift: _selectedTime,
+        beforeMeal: _isBeforeMeal,
+        days: _selectedDays.toList(),
+      );
 
-        print(response);
-
+      if (success) {
         _medicineController.clear();
         _selectedDays.clear();
-
         await _loadReminders();
+
+        if (success) {
+          // Schedule notifications locally
+          final timeOfDay = _getTimeOfDayFromShift(_selectedTime);
+          final weekdays = _getWeekdaysFromSelectedDays(_selectedDays.toList());
+
+          await NotificationService().scheduleMedicineReminder(
+            id: patientId, // you can add a unique ID scheme here, maybe patientId + timestamp
+            medicineName: _medicineController.text.trim(),
+            timeOfDay: timeOfDay,
+            weekdays: weekdays,
+            afterMeal: !_isBeforeMeal, // adjust if needed, your service expects afterMeal bool
+          );
+
+          _medicineController.clear();
+          _selectedDays.clear();
+          await _loadReminders();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Reminder added successfully')),
+          );
+        }
+
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Reminder added successfully')),
         );
-      } catch (e) {
-        print("Error adding reminder: $e");
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to add reminder')),
         );
@@ -237,9 +260,8 @@ class _MedicineReminderState extends State<MedicineReminder> {
 
   Future<void> _loadReminders() async {
     try {
-      final medicineReminders = await MedicineReminderService.getReminders(
-        int.parse(AuthService.id),
-      );
+      final medicineReminders =
+      await MedicineReminderService.getReminders(patientId);
 
       setState(() {
         reminders
@@ -253,6 +275,34 @@ class _MedicineReminderState extends State<MedicineReminder> {
       );
     }
   }
+
+  TimeOfDay _getTimeOfDayFromShift(String shift) {
+    switch (shift.toLowerCase()) {
+      case 'morning':
+        return const TimeOfDay(hour: 4, minute: 30);
+      case 'afternoon':
+        return const TimeOfDay(hour: 13, minute: 0);
+      case 'night':
+        return const TimeOfDay(hour: 20, minute: 0);
+      default:
+        return const TimeOfDay(hour: 9, minute: 0); // default fallback time
+    }
+  }
+
+  List<int> _getWeekdaysFromSelectedDays(List<String> selectedDays) {
+    const dayMap = {
+      'Monday': 1,
+      'Tuesday': 2,
+      'Wednesday': 3,
+      'Thursday': 4,
+      'Friday': 5,
+      'Saturday': 6,
+      'Sunday': 7,
+    };
+
+    return selectedDays.map((day) => dayMap[day]!).toList();
+  }
+
 
   @override
   void dispose() {
