@@ -3,6 +3,8 @@ import '../services/authService.dart';
 import '../services/medicineReminderService.dart';
 import '../services/notificationService.dart';
 import '../widgets/keyboard_aware_scroll_view.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 
 class MedicineReminder extends StatefulWidget {
   const MedicineReminder({super.key});
@@ -18,6 +20,7 @@ class _MedicineReminderState extends State<MedicineReminder> {
   bool _isBeforeMeal = true;
   final Set<String> _selectedDays = {};
   late final int patientId;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   List<Map<String, dynamic>> reminders = [];
 
@@ -34,7 +37,9 @@ class _MedicineReminderState extends State<MedicineReminder> {
   @override
   void initState() {
     super.initState();
+    print(AuthService.id);
     patientId = int.parse(AuthService.id);
+    checkScheduledNotifications();
     _loadReminders();
   }
 
@@ -222,7 +227,7 @@ class _MedicineReminderState extends State<MedicineReminder> {
 
         if (success) {
           // Schedule notifications locally
-          final timeOfDay = _getTimeOfDayFromShift(_selectedTime);
+          final timeOfDay = _getTimeOfDayFromShift(_selectedTime, !_isBeforeMeal);
           final weekdays = _getWeekdaysFromSelectedDays(_selectedDays.toList());
 
           await NotificationService().scheduleMedicineReminder(
@@ -276,18 +281,34 @@ class _MedicineReminderState extends State<MedicineReminder> {
     }
   }
 
-  TimeOfDay _getTimeOfDayFromShift(String shift) {
+  TimeOfDay _getTimeOfDayFromShift(String shift, bool afterMeal) {
+    // Define base times for each shift
+    late TimeOfDay baseTime;
+
     switch (shift.toLowerCase()) {
       case 'morning':
-        return const TimeOfDay(hour: 4, minute: 30);
+        baseTime = const TimeOfDay(hour: 7, minute: 30);
+        break;
       case 'afternoon':
-        return const TimeOfDay(hour: 13, minute: 0);
+        baseTime = const TimeOfDay(hour: 13, minute: 30);
+        break;
       case 'night':
-        return const TimeOfDay(hour: 20, minute: 0);
+        baseTime = const TimeOfDay(hour: 20, minute: 0);
+        break;
       default:
-        return const TimeOfDay(hour: 9, minute: 0); // default fallback time
+        baseTime = const TimeOfDay(hour: 9, minute: 0);
     }
+
+    // Adjust time by ±30 minutes
+    final offsetMinutes = afterMeal ? 30 : -30;
+    final totalMinutes = baseTime.hour * 60 + baseTime.minute + offsetMinutes;
+
+    final adjustedHour = (totalMinutes ~/ 60) % 24;
+    final adjustedMinute = totalMinutes % 60;
+
+    return TimeOfDay(hour: adjustedHour, minute: adjustedMinute);
   }
+
 
   List<int> _getWeekdaysFromSelectedDays(List<String> selectedDays) {
     const dayMap = {
@@ -301,6 +322,22 @@ class _MedicineReminderState extends State<MedicineReminder> {
     };
 
     return selectedDays.map((day) => dayMap[day]!).toList();
+  }
+
+  Future<void> checkScheduledNotifications() async {
+    final List<PendingNotificationRequest> pendingNotificationRequests =
+    await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+
+    for (var notification in pendingNotificationRequests) {
+      print('ID: ${notification.id}');
+      print('Title: ${notification.title}');
+      print('Body: ${notification.body}');
+      print('Payload: ${notification.payload}');
+    }
+
+    if (pendingNotificationRequests.isEmpty) {
+      print("No scheduled notifications");
+    }
   }
 
 

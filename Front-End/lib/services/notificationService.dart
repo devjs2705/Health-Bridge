@@ -12,13 +12,25 @@ class NotificationService {
   NotificationService._internal();
 
   static Future<void> init() async {
+    // Initialize timezones (needed for scheduled notifications)
     tz.initializeTimeZones();
 
+    // Android initialization settings
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
 
+    // Initialize the plugin
     await _flutterLocalNotificationsPlugin.initialize(initSettings);
+
+    // ✅ Request permission for Android 13+ (API 33+)
+    final androidImplementation = _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidImplementation != null) {
+      await androidImplementation.requestPermission();
+    }
   }
+
 
   Future<void> scheduleMedicineReminder({
     required int id,

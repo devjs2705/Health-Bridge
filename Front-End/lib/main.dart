@@ -36,7 +36,7 @@ class RuralMedApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'RuralMed',
         theme: AppTheme.theme,
-        initialRoute: '/home',
+        initialRoute: '/login',
         routes: {
           '/login': (context) => const LoginScreen(),
           '/signup': (context) => const SignupScreen(),
