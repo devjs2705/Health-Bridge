@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/authService.dart'; // Make sure path is correct
+import '../services/authService.dart';
+import '../services/notificationService.dart'; // Make sure path is correct
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +22,18 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //
+  //   NotificationService.init().then((_) {
+  //     print('Notification service initialized');
+  //   }).catchError((e) {
+  //     print('Notification init failed: $e');
+  //   });
+  // }
+
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;

@@ -63,6 +63,7 @@ class AuthService {
       if(patientId != null) {
         AuthService.role = "patient";
         AuthService.id = patientId.toString();
+        print(AuthService.id);
       }
       else {
         AuthService.role = "doctor";

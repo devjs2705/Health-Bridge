@@ -14,8 +14,11 @@ import 'screens/signup_screen.dart';
 import 'theme/app_theme.dart';
 import 'providers/appointments_provider.dart';
 import 'providers/availability_provider.dart';
+import 'services/notificationService.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init();
   runApp(const RuralMedApp());
 }
 
