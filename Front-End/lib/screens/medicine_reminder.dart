@@ -39,7 +39,7 @@ class _MedicineReminderState extends State<MedicineReminder> {
     super.initState();
     print(AuthService.id);
     patientId = int.parse(AuthService.id);
-    checkScheduledNotifications();
+    // checkScheduledNotifications();
     _loadReminders();
   }
 
@@ -234,13 +234,14 @@ class _MedicineReminderState extends State<MedicineReminder> {
             id: patientId, // you can add a unique ID scheme here, maybe patientId + timestamp
             medicineName: _medicineController.text.trim(),
             timeOfDay: timeOfDay,
-            weekdays: weekdays,
-            afterMeal: !_isBeforeMeal, // adjust if needed, your service expects afterMeal bool
+            afterMeal: !_isBeforeMeal,
+            days: [], // adjust if needed, your service expects afterMeal bool
           );
 
           _medicineController.clear();
           _selectedDays.clear();
           await _loadReminders();
+          await checkScheduledNotifications();
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Reminder added successfully')),

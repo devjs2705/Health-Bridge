@@ -7,53 +7,67 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
 
-  static final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
 
   NotificationService._internal();
 
-  static Future<void> init() async {
-    // Initialize timezones (needed for scheduled notifications)
-    tz.initializeTimeZones();
+  static bool _initialized = false;
 
-    // Android initialization settings
+  static Future<void> init() async {
+    if (_initialized) return;
+
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Kolkata')); // ✅ Set local tz
+
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidSettings);
 
-    // Initialize the plugin
     await _flutterLocalNotificationsPlugin.initialize(initSettings);
 
-    // ✅ Request permission for Android 13+ (API 33+)
-    final androidImplementation = _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-
-    if (androidImplementation != null) {
-      await androidImplementation.requestPermission();
+    final androidImpl =
+    _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidImpl != null) {
+      await androidImpl.requestPermission();
     }
-  }
 
+    _initialized = true;
+  }
 
   Future<void> scheduleMedicineReminder({
     required int id,
     required String medicineName,
     required TimeOfDay timeOfDay,
-    required List<int> weekdays,
+    required List<String> days,
     required bool afterMeal,
   }) async {
     final androidDetails = AndroidNotificationDetails(
       'med_reminder_channel',
       'Medicine Reminders',
-      channelDescription: 'Channel for medicine reminder notifications',
+      channelDescription: 'Reminder notifications for medicine intake',
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
-      sound: RawResourceAndroidNotificationSound('medicine_reminder_notification_tune'), // optional custom sound, add file in android/res/raw/reminder_tone.mp3
+      sound: RawResourceAndroidNotificationSound('medicine_reminder_notification_tune'),
     );
 
     final notificationDetails = NotificationDetails(android: androidDetails);
-
     final now = tz.TZDateTime.now(tz.local);
 
-    for (int weekday in weekdays) {
+    final dayToInt = {
+      'Sunday': DateTime.sunday,
+      'Monday': DateTime.monday,
+      'Tuesday': DateTime.tuesday,
+      'Wednesday': DateTime.wednesday,
+      'Thursday': DateTime.thursday,
+      'Friday': DateTime.friday,
+      'Saturday': DateTime.saturday,
+    };
+
+    for (String day in days) {
+      int weekday = dayToInt[day] ?? DateTime.monday;
+
       tz.TZDateTime scheduledDate = tz.TZDateTime(
         tz.local,
         now.year,
@@ -68,15 +82,15 @@ class NotificationService {
       }
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(
-        id + weekday, // unique ID per day
+        id + weekday,
         'Medicine Reminder',
         '$medicineName – ${afterMeal ? "After" : "Before"} meal',
         scheduledDate,
         notificationDetails,
         androidAllowWhileIdle: true,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
         uiLocalNotificationDateInterpretation:
         UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
     }
   }

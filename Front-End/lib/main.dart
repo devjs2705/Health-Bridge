@@ -17,7 +17,8 @@ import 'providers/availability_provider.dart';
 import 'services/notificationService.dart';
 
 Future<void> main() async {
-  // await NotificationService.init();
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init();
   runApp(const RuralMedApp());
 }
 
