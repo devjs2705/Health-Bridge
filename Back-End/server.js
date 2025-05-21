@@ -9,6 +9,7 @@ const bookAppointment = require("./routes/bookAppointment.js");
 const patientMyAppointments = require("./routes/patientMyAppointments.js");
 const doctorMyAppointments = require("./routes/doctorMyAppointments.js");
 const medicineReminder = require("./routes/medicineReminder.js");
+const vdoCallData = require("./routes/videoCallData.js");
 const connectDb = require("./utils/DB.js")
 const cors = require("cors")
 
@@ -32,6 +33,8 @@ app.use("/api/patient", doctorTimeSlots);
 app.use("/api/patient", bookAppointment);
 app.use("/api/patient", patientMyAppointments);
 app.use("/api/patient", medicineReminder);
+
+app.use("/api/appointment", vdoCallData);
 
 
 const PORT = 5000;
