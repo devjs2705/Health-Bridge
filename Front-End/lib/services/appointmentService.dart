@@ -39,6 +39,9 @@ class AppointmentService {
     required String doctorId,
     required String patientId,
     required String availabilityId,
+    required String channelName,
+    required int doctor_uid,
+    required int patient_uid
   }) async {
     final url = Uri.parse('$baseUrl/api/patient/bookAppointment');
 
@@ -50,6 +53,9 @@ class AppointmentService {
         "doctorId": doctorId,
         "patientId": patientId,
         "availabilityId": availabilityId,
+        "channelName": channelName,
+        "doctor_uid": doctor_uid,
+        "patient_uid": patient_uid
       }),
     );
 

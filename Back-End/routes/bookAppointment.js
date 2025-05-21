@@ -4,7 +4,7 @@ const db = require("../utils/DB");
 
 // 4️⃣ Book an appointment
 router.post("/bookAppointment", async (req, res) => {
-    const { patientId, doctorId, availabilityId } = req.body;
+    const { patientId, doctorId, availabilityId, doctor_uid, patient_uid, channelName} = req.body;
 
     if (!patientId || !doctorId || !availabilityId) {
         return res.status(400).json({ message: "All fields are required." });
@@ -16,8 +16,8 @@ router.post("/bookAppointment", async (req, res) => {
 
         // Insert appointment record (without appointment_date)
         await connection.query(
-            "INSERT INTO appointments (doctor_id, patient_id, availability_id, status) VALUES (?, ?, ?, ?)",
-            [doctorId, patientId, availabilityId, "Booked"]
+            "INSERT INTO appointments (doctor_id, patient_id, availability_id, doctor_uid, patient_uid, channel_name, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [doctorId, patientId, availabilityId, doctor_uid, patient_uid, channelName, "Booked"]
         );
 
         // Mark the selected time slot as booked

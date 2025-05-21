@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import '../services/appointmentService.dart';
 import '../services/authService.dart';
@@ -89,10 +91,16 @@ class _AppointmentBookingState extends State<AppointmentBooking> {
               onPressed: () async {
                 try {
                   String patientId = AuthService.id;
+                  String channelName = DateTime.now().millisecondsSinceEpoch.toString();;
+                  int doctor_uid = generateRandomUid();
+                  int patient_uid = generateRandomUid();
                   await AppointmentService.bookAppointment(
                     doctorId: _selectedDoctor!['doctor_id'].toString(),
                     patientId: patientId,
                     availabilityId: _selectedSlot!['availability_id'].toString(),
+                    channelName: channelName,
+                    doctor_uid: doctor_uid,
+                    patient_uid: patient_uid
                   );
                   Navigator.pop(context);
                   Navigator.pop(context);
@@ -110,6 +118,11 @@ class _AppointmentBookingState extends State<AppointmentBooking> {
         ),
       );
     }
+  }
+
+  int generateRandomUid() {
+    final random = Random();
+    return random.nextInt(1000000); // Generates a random number between 0 and 999,999
   }
 
   Future<void> _loadTimeSlots() async {
