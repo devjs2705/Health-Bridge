@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/myAppointmentService.dart';
+import '../services/videoCallService.dart';
+import './video_call_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class AppointmentsList extends StatefulWidget {
   final String role; // 'doctor' or 'patient'
@@ -61,12 +64,11 @@ class _AppointmentsListState extends State<AppointmentsList> {
   }
 
   Widget _buildAppointmentCard(Map<String, dynamic> appointment) {
-    // Decide common fields
     final status = appointment['status'] ?? 'unknown';
     final date = appointment['available_date'] ?? '';
     final time = appointment['time_slot'] ?? '';
+    final appointmentId = appointment['appointment_id'];
 
-    // Dynamic values based on role
     final name = widget.role == 'doctor'
         ? appointment['patient_name']
         : appointment['doctor_name'];
@@ -111,8 +113,39 @@ class _AppointmentsListState extends State<AppointmentsList> {
             ),
             const SizedBox(height: 8),
             Text(subtitle),
-            Text('Date: $date'),
-            Text('Time: $time'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Date: $date'),
+                    Text('Time: $time'),
+                  ],
+                ),
+                SizedBox(
+                  height: 36,
+                  width: 36,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      startVideoCall(context, appointmentId, widget.role == 'doctor');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      backgroundColor: Colors.blueAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: const FaIcon(
+                      FontAwesomeIcons.video,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -142,6 +175,28 @@ class _AppointmentsListState extends State<AppointmentsList> {
         return Colors.red;
       default:
         return Colors.grey;
+    }
+  }
+
+  void startVideoCall(BuildContext context, int appointmentId, bool isDoctor) async {
+    final data = await fetchVideoCallData(appointmentId);
+
+    if (data != null) {
+      final uid = isDoctor ? data.doctorUid : data.patientUid;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VideoCallScreen(
+            channelName: data.channelName,
+            uid: uid,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to start video call')),
+      );
     }
   }
 }
