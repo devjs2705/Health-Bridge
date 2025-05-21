@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+groq = "*"
+speechrecognition = "*"
+pydub = "*"
+pyaudio = "*"
+gtts = "*"
+elevenlabs = "*"
+gradio = "*"
+deep-translator = "*"
+openai-whisper = {git = "https://github.com/openai/whisper.git"}
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"

@@ -12,6 +12,7 @@ const medicineReminder = require("./routes/medicineReminder.js");
 const vdoCallData = require("./routes/videoCallData.js");
 const connectDb = require("./utils/DB.js")
 const cors = require("cors")
+const chatbot = require("./routes/chatbot.js");
 
 const corsOptions = {
     origin: "http://localhost:5173",
@@ -35,6 +36,8 @@ app.use("/api/patient", patientMyAppointments);
 app.use("/api/patient", medicineReminder);
 
 app.use("/api/appointment", vdoCallData);
+
+app.use("/api/chatbot", chatbot);
 
 
 const PORT = 5000;
